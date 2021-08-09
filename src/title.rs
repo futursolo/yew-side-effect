@@ -94,7 +94,7 @@ pub struct TitleProps {
     pub value: Option<String>,
 }
 
-pub(crate) struct Title {
+pub struct Title {
     props: TitleProps,
 }
 
