@@ -76,14 +76,7 @@ impl Component for BaseTitleProvider {
 
 impl BaseTitleProvider {
     fn sync_title(&self) {
-        let title = if let Some(m) = self
-            .props
-            .effects
-            .iter()
-            .filter_map(|m| m.value.as_ref())
-            .rev()
-            .next()
-        {
+        let title = if let Some(m) = self.props.effects.last().and_then(|m| m.value.as_ref()) {
             (&*self.props.format_title)(m)
         } else {
             self.props.default_title.clone()
