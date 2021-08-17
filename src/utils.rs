@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
 use once_cell::sync::Lazy;
-use yew::web_sys::{Document, Window};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Id(u64);
@@ -22,12 +21,4 @@ impl Default for Id {
     fn default() -> Self {
         Self::new()
     }
-}
-
-pub(crate) fn window() -> Window {
-    yew::web_sys::window().expect("Window is not available.")
-}
-
-pub(crate) fn document() -> Document {
-    window().document().expect("Document is not available.")
 }

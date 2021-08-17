@@ -7,24 +7,26 @@ use yewtil::store::{Store, StoreWrapper};
 use crate::effects::Effects;
 use crate::utils::Id;
 
-pub enum Message<T: Default + PartialEq + 'static> {
+pub enum Message<T: 'static> {
     Add((Id, Rc<T>)),
     Update((Id, Rc<T>)),
     Remove(Id),
 }
 
-#[derive(Default)]
-pub struct EffectStore<T: Default + PartialEq + 'static> {
+pub struct EffectStore<T: 'static> {
     effect_ids: Vec<Id>,
     pub effects: HashMap<Id, Rc<T>>,
 }
 
-impl<T: Default + PartialEq + 'static> Store for EffectStore<T> {
+impl<T: 'static> Store for EffectStore<T> {
     type Action = Message<T>;
     type Input = Message<T>;
 
     fn new() -> EffectStore<T> {
-        EffectStore::default()
+        EffectStore {
+            effect_ids: Vec::new(),
+            effects: HashMap::new(),
+        }
     }
 
     fn handle_input(&self, link: AgentLink<StoreWrapper<Self>>, msg: Self::Input) {
@@ -40,7 +42,7 @@ impl<T: Default + PartialEq + 'static> Store for EffectStore<T> {
     }
 }
 
-impl<T: Default + PartialEq + 'static> EffectStore<T> {
+impl<T: 'static> EffectStore<T> {
     pub fn add_effect(&mut self, id: Id, effect: Rc<T>) {
         self.effect_ids.push(id.clone());
         self.effects.insert(id, effect);

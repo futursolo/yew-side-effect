@@ -2,12 +2,12 @@ use yew::prelude::*;
 
 use crate::effects::Effects;
 
-#[derive(Properties)]
-pub struct WithEffectProps<T: Default + PartialEq + 'static> {
+#[derive(Properties, Debug)]
+pub struct WithEffectProps<T> {
     pub effects: Effects<T>,
 }
 
-impl<T: Default + PartialEq + 'static> Clone for WithEffectProps<T> {
+impl<T> Clone for WithEffectProps<T> {
     fn clone(&self) -> Self {
         Self {
             effects: self.effects.clone(),
@@ -16,7 +16,7 @@ impl<T: Default + PartialEq + 'static> Clone for WithEffectProps<T> {
 }
 
 pub trait WithEffectPropsMut {
-    type Effect: Default + PartialEq + 'static;
+    type Effect;
 
     fn effects_mut(&mut self) -> &mut Effects<Self::Effect>;
 }

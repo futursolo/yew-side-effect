@@ -8,7 +8,7 @@ use crate::with_effect_props::WithEffectPropsMut;
 
 type EffectType<T> = <<T as Component>::Properties as WithEffectPropsMut>::Effect;
 
-pub enum WithEffectMsg<T: Default + PartialEq + 'static> {
+pub enum WithEffectMsg<T: 'static> {
     EffectUpdated(ReadOnly<EffectStore<T>>),
 }
 

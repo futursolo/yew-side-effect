@@ -8,11 +8,11 @@ use crate::store;
 use crate::utils::Id;
 
 #[derive(Properties)]
-pub struct EffectProps<T: Default + PartialEq + 'static> {
+pub struct EffectProps<T: 'static> {
     pub value: Rc<T>,
 }
 
-impl<T: Default + PartialEq + 'static> Clone for EffectProps<T> {
+impl<T: 'static> Clone for EffectProps<T> {
     fn clone(&self) -> Self {
         Self {
             value: self.value.clone(),
@@ -20,13 +20,13 @@ impl<T: Default + PartialEq + 'static> Clone for EffectProps<T> {
     }
 }
 
-pub struct Effect<T: Default + PartialEq + 'static> {
+pub struct Effect<T: 'static> {
     props: EffectProps<T>,
     id: Id,
     store: Box<dyn Bridge<StoreWrapper<store::EffectStore<T>>>>,
 }
 
-impl<T: Default + PartialEq + 'static> Component for Effect<T> {
+impl<T: 'static> Component for Effect<T> {
     type Message = ();
     type Properties = EffectProps<T>;
 

@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use crate::effect::Effect;
 use crate::effects::Effects;
-use crate::utils::document;
 use crate::with_effect::WithEffect;
 use crate::with_effect_props::WithEffectPropsMut;
+use yew::utils::document;
 
 use yew::prelude::*;
 use yewtil::NeqAssign;
@@ -20,12 +20,17 @@ impl From<String> for TitleEffect {
     }
 }
 
+/// The Properties for Title Provider
 #[derive(Properties, Clone)]
 pub struct TitleProviderProps {
+    #[doc(hidden)]
     #[prop_or_default]
     pub effects: Effects<TitleEffect>,
 
+    /// The default title.
     pub default_title: String,
+
+    /// A Function to format title.
     pub format_title: Rc<dyn Fn(&str) -> String>,
 
     pub children: Children,
@@ -75,6 +80,7 @@ impl Component for BaseTitleProvider {
 }
 
 impl BaseTitleProvider {
+    // We set the last title to the document.
     fn sync_title(&self) {
         let title = if let Some(m) = self.props.effects.last().and_then(|m| m.value.as_ref()) {
             (&*self.props.format_title)(m)
@@ -86,14 +92,22 @@ impl BaseTitleProvider {
     }
 }
 
+/// The Title Provider
+///
+/// You should register this title provider like a react context provider.
 pub type TitleProvider = WithEffect<BaseTitleProvider>;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct TitleProps {
     #[prop_or_default]
-    pub value: Option<String>,
+    pub value: String,
 }
 
+/// Set a title
+///
+/// ```
+/// html! {<Title value="My Awesome Site" />}
+/// ```
 pub struct Title {
     props: TitleProps,
 }
@@ -116,7 +130,7 @@ impl Component for Title {
 
     fn view(&self) -> Html {
         let effect = Rc::new(TitleEffect {
-            value: self.props.value.clone(),
+            value: Some(self.props.value.clone()),
         });
 
         html! {<Effect<TitleEffect> value=effect />}

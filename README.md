@@ -15,7 +15,7 @@ Each effect needs to have a different struct.
 ```rust
 #[derive(Debug, Clone)]
 pub struct EffectA {
-    value: Option<String>,
+    value: String,
 }
 ```
 
@@ -35,11 +35,11 @@ html! {<Effect<EffectA> value=effect />}
 
 Effects are registered in rendering order.
 
-3. Read effects with `<WithEffect<Consumer> />`
+3. Reconcile effects with `<WithEffect<Provider> />`
 
-Define a `Consumer` component that reconciles effects.
+Define a `Provider` component that reconciles effects.
 
-`Consumer` component needs to have a prop with type `WithEffectProps` or
+`Provider` component needs to have a prop with type `WithEffectProps` or
 have a type that implements `WithEffectPropsMut`.
 
 There can be multiple consumers for a signle effect.
@@ -70,7 +70,11 @@ impl Component for BaseEffectApplier {
         Html::default()
     }
 }
+
+pub type EffectApplier = WithEffect<BaseEffectApplier>;
 ```
+
+This HOC pattern is inspired by Yewdux.
 
 `WithEffectProps` has a property effects, which dereferences to a
 `&[Rc<EffectType>]` in which you can access the effects like a slice.
@@ -79,7 +83,7 @@ For a complete example, please see [Title](/src/title.rs).
 
 It is recommended that you use a `Provider`, React Context-like
 approach as this library may drop `yewtil::store` in favour of the
-upcoming Context API.
+upcoming Context API when Yew 0.19 comes.
 
 ## Licence
 
