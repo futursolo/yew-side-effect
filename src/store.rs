@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use yew::agent::AgentLink;
-use yewtil::store::{Store, StoreWrapper};
+use yewtil::store::StoreWrapper;
 
-use crate::effects::Effects;
 use crate::utils::Id;
+use crate::SideEffects;
 
 pub enum Message<T: 'static> {
     Add((Id, Rc<T>)),
@@ -13,17 +13,17 @@ pub enum Message<T: 'static> {
     Remove(Id),
 }
 
-pub struct EffectStore<T: 'static> {
+pub struct Store<T: 'static> {
     effect_ids: Vec<Id>,
-    pub effects: HashMap<Id, Rc<T>>,
+    effects: HashMap<Id, Rc<T>>,
 }
 
-impl<T: 'static> Store for EffectStore<T> {
+impl<T: 'static> yewtil::store::Store for Store<T> {
     type Action = Message<T>;
     type Input = Message<T>;
 
-    fn new() -> EffectStore<T> {
-        EffectStore {
+    fn new() -> Self {
+        Self {
             effect_ids: Vec::new(),
             effects: HashMap::new(),
         }
@@ -35,29 +35,29 @@ impl<T: 'static> Store for EffectStore<T> {
 
     fn reduce(&mut self, msg: Self::Action) {
         match msg {
-            Message::Add((id, effect)) => self.add_effect(id, effect),
-            Message::Update((id, effect)) => self.update_effect(id, effect),
-            Message::Remove(id) => self.remove_effect(id),
+            Message::Add((id, effect)) => self.add(id, effect),
+            Message::Update((id, effect)) => self.update(id, effect),
+            Message::Remove(id) => self.remove(id),
         }
     }
 }
 
-impl<T: 'static> EffectStore<T> {
-    pub fn add_effect(&mut self, id: Id, effect: Rc<T>) {
+impl<T: 'static> Store<T> {
+    fn add(&mut self, id: Id, effect: Rc<T>) {
         self.effect_ids.push(id.clone());
         self.effects.insert(id, effect);
     }
 
-    pub fn update_effect(&mut self, id: Id, effect: Rc<T>) {
+    fn update(&mut self, id: Id, effect: Rc<T>) {
         self.effects.insert(id, effect);
     }
 
-    pub fn remove_effect(&mut self, id: Id) {
+    fn remove(&mut self, id: Id) {
         self.effect_ids.retain(|m| m != &id);
         self.effects.remove(&id);
     }
 
-    pub fn get_effects(&self) -> Effects<T> {
+    pub(crate) fn get(&self) -> SideEffects<T> {
         let mut effects = Vec::new();
 
         for effect_id in self.effect_ids.iter() {
@@ -66,6 +66,6 @@ impl<T: 'static> EffectStore<T> {
             }
         }
 
-        Effects::new(effects)
+        SideEffects::new(effects)
     }
 }
