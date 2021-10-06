@@ -28,5 +28,6 @@ pub mod title;
 mod utils;
 
 pub use comps::{SideEffect, SideEffectProvider};
+pub use hooks::use_side_effects;
 
 pub use collections::SideEffects;
