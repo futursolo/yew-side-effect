@@ -16,6 +16,5 @@ readme = "README.md"
 homepage = "https://github.com/futursolo/yew-side-effect"
 
 [dependencies]
-yew = { version = "0.18.0", default-features = false, features = ["web_sys"] }
-yewtil = "0.4.0"
+yew = { git = "https://github.com/yewstack/yew" }
 once_cell = "1.8.0"

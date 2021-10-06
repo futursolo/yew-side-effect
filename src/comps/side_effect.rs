@@ -1,18 +1,20 @@
 use std::rc::Rc;
 
-use yew::agent::Bridge;
 use yew::prelude::*;
-use yewtil::store::{Bridgeable, StoreWrapper};
 
-use crate::store;
+use crate::hooks::use_store;
+use crate::store::Message;
 use crate::utils::Id;
 
-#[derive(Properties)]
-pub struct SideEffectProps<T: 'static> {
+#[derive(Properties, PartialEq)]
+pub struct SideEffectProps<T: PartialEq + 'static> {
     pub value: Rc<T>,
 }
 
-impl<T> Clone for SideEffectProps<T> {
+impl<T> Clone for SideEffectProps<T>
+where
+    T: PartialEq + 'static,
+{
     fn clone(&self) -> Self {
         Self {
             value: self.value.clone(),
@@ -20,7 +22,7 @@ impl<T> Clone for SideEffectProps<T> {
     }
 }
 
-/// Registers a signle side effect.
+/// Registers a single side effect.
 ///
 /// Each `SideEffect<T>` accepts a `Rc<T>` as value, it will be stored in order of creation.
 ///
@@ -29,7 +31,7 @@ impl<T> Clone for SideEffectProps<T> {
 /// use std::rc::Rc;
 /// use yew_side_effect::SideEffect;
 ///
-/// #[derive(Debug, Clone)]
+/// #[derive(Debug, Clone, PartialEq)]
 /// pub struct SideEffectA {
 ///     value: String,
 /// }
@@ -38,47 +40,40 @@ impl<T> Clone for SideEffectProps<T> {
 ///     value: "My Side Effect!".into(),
 /// });
 ///
-/// let rendered = html! {<SideEffect<SideEffectA> value=val />};
+/// let rendered = html! {<SideEffect<SideEffectA> value={val} />};
 /// ```
-pub struct SideEffect<T: 'static> {
-    props: SideEffectProps<T>,
-    id: Id,
-    store: Box<dyn Bridge<StoreWrapper<store::Store<T>>>>,
-}
+#[function_component(SideEffect)]
+pub fn side_effect<T>(props: &SideEffectProps<T>) -> Html
+where
+    T: PartialEq + 'static,
+{
+    let id = use_state(Id::new);
+    let store = use_store().expect("No context set.");
 
-impl<T> Component for SideEffect<T> {
-    type Message = ();
-    type Properties = SideEffectProps<T>;
+    use_effect_with_deps(
+        |deps| {
+            let (store, value, id) = deps;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        let id = Id::new();
-        let mut store = store::Store::bridge(Callback::from(|_| ()));
+            if (*store).has(id) {
+                store.dispatch(Message::Update((id.clone(), value.clone())));
+            } else {
+                store.dispatch(Message::Add((id.clone(), value.clone())));
+            }
+            || {}
+        },
+        (store.clone(), props.value.clone(), (*id).clone()),
+    );
 
-        store.send(store::Message::Add((id.clone(), props.value.clone())));
+    use_effect_with_deps(
+        |deps| {
+            let (store, id) = deps;
+            let store = store.clone();
+            let id = id.clone();
 
-        Self { props, id, store }
-    }
+            move || store.dispatch(Message::Remove(id.clone()))
+        },
+        (store, (*id).clone()),
+    );
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props = props;
-
-        self.store.send(store::Message::Update((
-            self.id.clone(),
-            self.props.value.clone(),
-        )));
-
-        false
-    }
-
-    fn destroy(&mut self) {
-        self.store.send(store::Message::Remove(self.id.clone()));
-    }
-
-    fn view(&self) -> Html {
-        Html::default()
-    }
+    Html::default()
 }

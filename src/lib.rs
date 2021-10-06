@@ -12,23 +12,21 @@
 //!
 //! Each side effect needs to have a different type(struct).
 //!
-//! 2. Set Side Effects with [`SideEffect<SideEffectType>`]
+//! 2. Define a Side Effects Context Provider using [`SideEffectProvider<T>`]
+//!
+//! 3. Set Side Effects with [`SideEffect<SideEffectType>`]
 //!
 //! All side effects will be collected at component's creation order.
-//!
-//! 3. Read Side Effects using [`WithSideEffect<T>`]
 //!
 //! Please refer to source code of [`title`] for a complete example.
 
 mod collections;
 mod comps;
-mod props;
+mod hooks;
 mod store;
 pub mod title;
 mod utils;
 
-pub use comps::{SideEffect, WithSideEffect};
+pub use comps::{SideEffect, SideEffectProvider};
 
 pub use collections::SideEffects;
-
-pub use props::{WithEffectProps, WithEffectPropsMut};

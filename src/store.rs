@@ -1,48 +1,46 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use yew::agent::AgentLink;
-use yewtil::store::StoreWrapper;
-
 use crate::utils::Id;
 use crate::SideEffects;
 
-pub enum Message<T: 'static> {
+pub(crate) enum Message<T: PartialEq + 'static> {
     Add((Id, Rc<T>)),
     Update((Id, Rc<T>)),
     Remove(Id),
 }
 
-pub struct Store<T: 'static> {
+#[derive(Debug, PartialEq)]
+pub(crate) struct Store<T: PartialEq + 'static> {
     effect_ids: Vec<Id>,
     effects: HashMap<Id, Rc<T>>,
 }
 
-impl<T: 'static> yewtil::store::Store for Store<T> {
-    type Action = Message<T>;
-    type Input = Message<T>;
+impl<T: PartialEq + 'static> Clone for Store<T> {
+    fn clone(&self) -> Self {
+        Self {
+            effect_ids: self.effect_ids.clone(),
+            effects: self.effects.clone(),
+        }
+    }
+}
 
-    fn new() -> Self {
+impl<T: PartialEq + 'static> Store<T> {
+    pub fn new() -> Self {
         Self {
             effect_ids: Vec::new(),
             effects: HashMap::new(),
         }
     }
 
-    fn handle_input(&self, link: AgentLink<StoreWrapper<Self>>, msg: Self::Input) {
-        link.send_message(msg);
-    }
-
-    fn reduce(&mut self, msg: Self::Action) {
+    pub fn reduce(&mut self, msg: Message<T>) {
         match msg {
             Message::Add((id, effect)) => self.add(id, effect),
             Message::Update((id, effect)) => self.update(id, effect),
             Message::Remove(id) => self.remove(id),
         }
     }
-}
 
-impl<T: 'static> Store<T> {
     fn add(&mut self, id: Id, effect: Rc<T>) {
         self.effect_ids.push(id.clone());
         self.effects.insert(id, effect);
@@ -57,7 +55,11 @@ impl<T: 'static> Store<T> {
         self.effects.remove(&id);
     }
 
-    pub(crate) fn get(&self) -> SideEffects<T> {
+    pub fn has(&self, id: &Id) -> bool {
+        self.effect_ids.contains(id)
+    }
+
+    pub fn get(&self) -> SideEffects<T> {
         let mut effects = Vec::new();
 
         for effect_id in self.effect_ids.iter() {

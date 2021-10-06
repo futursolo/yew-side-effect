@@ -8,14 +8,10 @@
 //! Only value provided to the last created [`Title`] will be set.
 use std::rc::Rc;
 
-use crate::SideEffect;
-use crate::SideEffects;
-use crate::WithEffectPropsMut;
-use crate::WithSideEffect;
+use crate::{SideEffect, SideEffectProvider, SideEffects};
 use yew::utils::document;
 
 use yew::prelude::*;
-use yewtil::NeqAssign;
 
 #[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
@@ -26,10 +22,6 @@ pub struct TitleSideEffect {
 /// The Properties for Title Provider
 #[derive(Properties, Clone)]
 pub struct TitleProviderProps {
-    #[doc(hidden)]
-    #[prop_or_default]
-    pub side_effects: SideEffects<TitleSideEffect>,
-
     /// The default title.
     pub default_title: String,
 
@@ -39,60 +31,12 @@ pub struct TitleProviderProps {
     pub children: Children,
 }
 
-impl WithEffectPropsMut for TitleProviderProps {
-    type SideEffect = TitleSideEffect;
-
-    fn side_effects_mut(&mut self) -> &mut SideEffects<TitleSideEffect> {
-        &mut self.side_effects
-    }
-}
-
-/// The base [`TitleProvider`] without [`WithSideEffect`]
-pub struct BaseTitleProvider {
-    props: TitleProviderProps,
-}
-
-impl Component for BaseTitleProvider {
-    type Message = ();
-    type Properties = TitleProviderProps;
-
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
-    }
-
-    fn rendered(&mut self, first_render: bool) {
-        if first_render {
-            self.sync_title();
-        }
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props = props;
-
-        self.sync_title();
-
-        true
-    }
-
-    fn view(&self) -> Html {
-        html! {<>{self.props.children.clone()}</>}
-    }
-}
-
-impl BaseTitleProvider {
-    // We set the last title to the document.
-    fn sync_title(&self) {
-        let title = if let Some(m) = self.props.side_effects.last().map(|m| m.value.as_ref()) {
-            (&*self.props.format_title)(m)
-        } else {
-            self.props.default_title.clone()
-        };
-
-        document().set_title(&title);
+#[allow(clippy::vtable_address_comparisons)]
+impl PartialEq for TitleProviderProps {
+    fn eq(&self, rhs: &Self) -> bool {
+        self.default_title == rhs.default_title
+            && self.children == rhs.children
+            && Rc::ptr_eq(&self.format_title, &rhs.format_title)
     }
 }
 
@@ -113,37 +57,46 @@ impl BaseTitleProvider {
 ///     type Message = ();
 ///     type Properties = ();
 ///
-///     fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+///     fn create(_ctx: &Context<Self>) -> Self {
 ///         Self
 ///     }
 ///
-///     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-///         false
-///     }
-///
-///     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-///         false
-///     }
-///
-///     fn view(&self) -> Html {
+///     fn view(&self, _ctx: &Context<Self>) -> Html {
 ///         let children = Html::default();
 ///
 ///         let format_fn = Rc::new(|m: &str| format!("{} - My Site", m)) as Rc<dyn Fn(&str) -> String>;
 ///
 ///         html!{
-///             <TitleProvider default_title="My Site" format_title=format_fn>
+///             <TitleProvider default_title="My Site" format_title={format_fn}>
 ///                 {children}
 ///             </TitleProvider>
 ///         }
 ///     }
 /// }
 /// ```
-pub type TitleProvider = WithSideEffect<BaseTitleProvider>;
+#[function_component(TitleProvider)]
+pub fn title_provider(props: &TitleProviderProps) -> Html {
+    let children = props.children.clone();
+    let format_title = props.format_title.clone();
+    let default_title = props.default_title.clone();
+
+    let sync_title = Rc::new(move |titles: SideEffects<TitleSideEffect>| {
+        // Set the last title to the document.
+        let title = if let Some(m) = titles.last().map(|m| m.value.as_ref()) {
+            format_title(m)
+        } else {
+            default_title.clone()
+        };
+
+        document().set_title(&title);
+    }) as Rc<dyn Fn(SideEffects<TitleSideEffect>)>;
+
+    html! {<SideEffectProvider<TitleSideEffect> on_change={sync_title}>{children}</SideEffectProvider<TitleSideEffect>>}
+}
 
 #[doc(hidden)]
 #[derive(Properties, Clone, PartialEq)]
 pub struct TitleProps {
-    #[prop_or_default]
     pub value: String,
 }
 
@@ -156,31 +109,11 @@ pub struct TitleProps {
 ///
 /// let rendered = html! {<Title value="Homepage" />};
 /// ```
-pub struct Title {
-    props: TitleProps,
-}
+#[function_component(Title)]
+pub fn title(props: &TitleProps) -> Html {
+    let effect = Rc::new(TitleSideEffect {
+        value: props.value.clone(),
+    });
 
-impl Component for Title {
-    type Message = ();
-    type Properties = TitleProps;
-
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props.neq_assign(props)
-    }
-
-    fn view(&self) -> Html {
-        let effect = Rc::new(TitleSideEffect {
-            value: self.props.value.clone(),
-        });
-
-        html! {<SideEffect<TitleSideEffect> value=effect />}
-    }
+    html! {<SideEffect<TitleSideEffect> value={effect} />}
 }

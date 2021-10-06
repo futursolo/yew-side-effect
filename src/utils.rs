@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use once_cell::sync::Lazy;
 
@@ -7,13 +7,9 @@ pub struct Id(u64);
 
 impl Id {
     pub fn new() -> Self {
-        static CTR: Lazy<Arc<Mutex<u64>>> = Lazy::new(Arc::default);
+        static CTR: Lazy<AtomicU64> = Lazy::new(AtomicU64::default);
 
-        let counter = CTR.clone();
-        let mut counter = counter.lock().unwrap();
-
-        *counter += 1;
-        Self(*counter)
+        Self(CTR.fetch_add(1, Ordering::SeqCst))
     }
 }
 
