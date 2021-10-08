@@ -59,14 +59,12 @@ where
     );
 
     use_effect_with_deps(
-        |deps| {
-            let (store, props) = deps;
+        |(side_effects, props)| {
             let on_change = props.on_change.clone();
-
-            on_change(store.get());
+            on_change(side_effects.clone());
             || {}
         },
-        ((*store).clone(), props.to_owned()),
+        ((*store).get(), props.clone()),
     );
 
     html! { <ContextProvider<StoreCtx<T>> context={store}>{children}</ContextProvider<StoreCtx<T>>> }

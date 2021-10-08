@@ -49,30 +49,29 @@ where
 {
     let id = use_state(Id::new);
     let store = use_store().expect("No context set.");
+    let store_id = store.id();
 
+
+    let store_clone = store.clone();
     use_effect_with_deps(
-        |deps| {
-            let (store, value, id) = deps;
-
-            if (*store).has(id) {
-                store.dispatch(Message::Update((id.clone(), value.clone())));
+        move |(_, value, id)| {
+            if (*store_clone).has(id) {
+                store_clone.dispatch(Message::Update((id.clone(), value.clone())));
             } else {
-                store.dispatch(Message::Add((id.clone(), value.clone())));
+                store_clone.dispatch(Message::Add((id.clone(), value.clone())));
             }
             || {}
         },
-        (store.clone(), props.value.clone(), (*id).clone()),
+        (store_id.clone(), props.value.clone(), (*id).clone()),
     );
 
     use_effect_with_deps(
-        |deps| {
-            let (store, id) = deps;
-            let store = store.clone();
+        move |(_, id)| {
             let id = id.clone();
 
             move || store.dispatch(Message::Remove(id.clone()))
         },
-        (store, (*id).clone()),
+        (store_id, (*id).clone()),
     );
 
     Html::default()

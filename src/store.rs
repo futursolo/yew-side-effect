@@ -12,6 +12,7 @@ pub(crate) enum Message<T: PartialEq + 'static> {
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Store<T: PartialEq + 'static> {
+    id: Id,
     effect_ids: Vec<Id>,
     effects: HashMap<Id, Rc<T>>,
 }
@@ -19,6 +20,7 @@ pub(crate) struct Store<T: PartialEq + 'static> {
 impl<T: PartialEq + 'static> Clone for Store<T> {
     fn clone(&self) -> Self {
         Self {
+            id: self.id.clone(),
             effect_ids: self.effect_ids.clone(),
             effects: self.effects.clone(),
         }
@@ -28,9 +30,14 @@ impl<T: PartialEq + 'static> Clone for Store<T> {
 impl<T: PartialEq + 'static> Store<T> {
     pub fn new() -> Self {
         Self {
+            id: Id::new(),
             effect_ids: Vec::new(),
             effects: HashMap::new(),
         }
+    }
+
+    pub fn id(&self) -> Id {
+        self.id.clone()
     }
 
     pub fn reduce(&mut self, msg: Message<T>) {
