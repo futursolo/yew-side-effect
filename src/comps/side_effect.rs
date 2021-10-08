@@ -51,7 +51,6 @@ where
     let store = use_store().expect("No context set.");
     let store_id = store.id();
 
-
     let store_clone = store.clone();
     use_effect_with_deps(
         move |(_, value, id)| {
