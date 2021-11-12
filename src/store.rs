@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use yew::prelude::*;
+
 use crate::utils::Id;
 use crate::SideEffects;
 
@@ -40,14 +42,6 @@ impl<T: PartialEq + 'static> Store<T> {
         self.id.clone()
     }
 
-    pub fn reduce(&mut self, msg: Message<T>) {
-        match msg {
-            Message::Add((id, effect)) => self.add(id, effect),
-            Message::Update((id, effect)) => self.update(id, effect),
-            Message::Remove(id) => self.remove(id),
-        }
-    }
-
     fn add(&mut self, id: Id, effect: Rc<T>) {
         self.effect_ids.push(id.clone());
         self.effects.insert(id, effect);
@@ -76,5 +70,24 @@ impl<T: PartialEq + 'static> Store<T> {
         }
 
         SideEffects::new(effects)
+    }
+}
+
+impl<T> Reducible for Store<T>
+where
+    T: PartialEq + 'static,
+{
+    type Action = Message<T>;
+
+    fn reduce(self: Rc<Self>, msg: Message<T>) -> Rc<Self> {
+        let mut self_ = (*self).clone();
+
+        match msg {
+            Message::Add((id, effect)) => self_.add(id, effect),
+            Message::Update((id, effect)) => self_.update(id, effect),
+            Message::Remove(id) => self_.remove(id),
+        }
+
+        self_.into()
     }
 }

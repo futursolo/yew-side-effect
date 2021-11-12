@@ -5,7 +5,7 @@ use yew::prelude::*;
 use crate::SideEffects;
 
 use crate::hooks::StoreCtx;
-use crate::store::{Message, Store};
+use crate::store::Store;
 
 #[derive(Properties)]
 pub struct ProviderProps<T: PartialEq + 'static> {
@@ -47,16 +47,7 @@ where
 {
     let children = props.children.clone();
 
-    let store = use_reducer_with_init(
-        |prev: Rc<Store<T>>, action: Message<T>| {
-            let mut store: Store<T> = (*prev).clone();
-            store.reduce(action);
-
-            store
-        },
-        (),
-        |_| Store::new(),
-    );
+    let store = use_reducer(Store::new);
 
     use_effect_with_deps(
         |(side_effects, props)| {

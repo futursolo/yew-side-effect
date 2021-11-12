@@ -9,7 +9,7 @@
 use std::rc::Rc;
 
 use crate::{SideEffect, SideEffectProvider, SideEffects};
-use yew::utils::document;
+use gloo_utils::document;
 
 use yew::prelude::*;
 
