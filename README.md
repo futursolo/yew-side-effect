@@ -1,5 +1,11 @@
 # yew-side-effect
 
+# Status
+
+No longer actively maintained. yew-side-effect has been superseded by
+the Artifact API and Helmet API in
+[bounce](https://github.com/futursolo/bounce).
+
 Reconcile Side Effects in Yew Applications
 
 This library is inspired by [react-side-effect](https://github.com/gaearon/react-side-effect)
